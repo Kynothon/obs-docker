@@ -1,0 +1,51 @@
+#! /bin/sh
+
+image="obs_nvidia:local"
+groups="video"
+devices="/dev/video* /dev/dri /dev/snd"
+volumes="/etc/group /usr/lib/libnvidia-encode.so.1 /usr/lib/libnvcuvid.so.1 /usr/lib/libcuda.so.1 /run/user/$(id -u) /tmp/.X11-unix $HOME"
+env="DISPLAY HOME XDG_RUNTIME_DIR"
+
+arglist(){
+    argname=$1
+    shift
+    for i in $@; do
+        echo $argname $i;
+    done
+}
+
+bindlist() {
+    echo $@ | sed -E 's/(\S+)/type=bind,source=\1,target=\1/g'
+}
+
+getgroup(){
+    echo $(getent group $@| awk -F: '{print $3}')
+}
+
+envlist(){
+    eval echo $(echo $@ | sed -E 's/(\S+)/\1=$\1/g')
+}
+
+arg_group=$(arglist --group-add $(getgroup ${groups}))
+arg_device=$(arglist --device ${devices})
+arg_volume=$(arglist --mount $(bindlist ${volumes}))
+arg_env=$(arglist --env $(envlist ${env}))
+
+gid=$(id -g)
+uid=$(id -u)
+id="${uid}:${gid}"
+hostname=$(uname --nodename)
+
+if [ -z $(docker images -q "${image}") ]; then
+    docker build -t ${image} .
+fi
+
+docker run --rm      \
+    --runtime=nvidia        \
+    --hostname=${hostname}  \
+    --user ${id}            \
+    ${arg_device}           \
+    ${arg_volume}           \
+    ${arg_group}            \
+    ${arg_env}              \
+    ${image}
