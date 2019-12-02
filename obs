@@ -1,10 +1,15 @@
 #! /bin/sh
 
 image="obs_nvidia:local"
+name="obs_nvidia"
 groups="video"
 devices="/dev/video* /dev/dri /dev/snd"
-volumes="/etc/group /usr/lib/libnvidia-encode.so.1 /usr/lib/libnvcuvid.so.1 /usr/lib/libcuda.so.1 /run/user/$(id -u) /tmp/.X11-unix $HOME"
+volumes="/etc/group /run/user/$(id -u) /tmp/.X11-unix /etc/machine-id /var/lib/dbus $HOME"
 env="DISPLAY HOME XDG_RUNTIME_DIR"
+docker_extra="" # "-it"
+extra=""
+stdout="/dev/null"
+stderr="/dev/null"
 
 arglist(){
     argname=$1
@@ -40,12 +45,22 @@ if [ -z $(docker images -q "${image}") ]; then
     docker build -t ${image} .
 fi
 
-docker run --rm      \
-    --runtime=nvidia        \
-    --hostname=${hostname}  \
-    --user ${id}            \
-    ${arg_device}           \
-    ${arg_volume}           \
-    ${arg_group}            \
-    ${arg_env}              \
-    ${image}
+if [ -z $(docker ps -a --filter "name=${name}" -q) ]; then
+	docker run  ${docker_extra}	\
+	    --runtime=nvidia        	\
+	    --name=${name}		\
+	    --hostname=${hostname}  	\
+	    --user ${id}            	\
+	    ${arg_device}           	\
+	    ${arg_volume}           	\
+	    ${arg_group}            	\
+	    ${arg_env}              	\
+	    ${image}		    	\
+	    ${extra} 		    	\
+	    1> ${stdout}            	\
+	    2> ${stderr}
+else
+	docker start ${name}		\
+	    1> ${stdout}            	\
+	    2> ${stderr}
+fi
