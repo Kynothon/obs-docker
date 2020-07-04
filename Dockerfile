@@ -20,7 +20,7 @@ RUN apt-get -yqq build-dep ffmpeg \
     && echo "\nCONFIG += --enable-nonfree --enable-nvenc\n" >> debian/rules \
     && debuild -us -uc -b 
 
-FROM nvidia/cuda:10.0-runtime-ubuntu18.04 as release
+FROM nvidia/cuda:10.2-runtime-ubuntu18.04 as release
 
 ENV NVIDIA_DRIVER_CAPABILITIES video,graphics
 

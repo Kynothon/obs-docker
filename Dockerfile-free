@@ -1,6 +1,4 @@
-FROM ubuntu:18.10 as build
-
-FROM ubuntu:18.10 as release
+FROM ubuntu:20.04 as release
 
 RUN apt update \
     && apt install -yqq software-properties-common \

@@ -47,7 +47,7 @@ fi
 
 if [ -z $(docker ps -a --filter "name=${name}" -q) ]; then
 	docker run  ${docker_extra}	\
-	    --runtime=nvidia        	\
+	    --gpus all 		      	\
 	    --name=${name}		\
 	    --hostname=${hostname}  	\
 	    --user ${id}            	\
